@@ -170,23 +170,28 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero__cta .btn--ghost { background: transparent; color: var(--on-brand); border-color: rgba(255,255,255,.5); }
 .hero__cta .btn--ghost:hover { background: var(--on-brand); color: var(--brand); border-color: var(--on-brand); }
 .hero__cta { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-6); }
-.hero__side { display: grid; gap: var(--s-6); align-content: start; }
-.hero__facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--s-5); margin: 0; border-top: 1px solid var(--line-brand); }
-.hero__facts > div { padding: var(--s-4) 0; border-bottom: 1px solid var(--line-brand); }
-.hero__facts dt { font-family: var(--display); font-size: var(--fs-4); font-weight: 600; letter-spacing: -.01em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--on-brand); }
-.hero__facts dd { margin: var(--s-2) 0 0; font-size: var(--fs-0); color: var(--on-brand-3); line-height: 1.35; max-width: 16em; }
-.hero__side .infoblokk--hero { margin-top: 0; }
+/* jobb oldal: tervlap-szövegmező (a műszaki rajzok keretes adatblokkja) — csak valós adat */
+.tb { display: flex; flex-direction: column; border: 1px solid var(--line-brand); background: rgba(255, 255, 255, .025); }
+.tb__h { display: flex; justify-content: space-between; gap: var(--s-4); padding: var(--s-3) var(--s-5); border-bottom: 1px solid var(--line-brand);
+  font-size: var(--fs-0); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--on-brand-3); }
+.tb__dl { margin: 0; }
+.tb__dl > div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line-brand); }
+.tb__dl dt { font-size: var(--fs-0); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--on-brand-3); hyphens: manual; }
+.tb__dl dd { margin: 0; font-family: var(--display); font-size: 1.1875rem; line-height: 1.2; color: var(--on-brand); font-variant-numeric: lining-nums; }
+.tb__dl dd small { display: block; margin-top: 4px; font-family: var(--sans); font-size: var(--fs-0); line-height: 1.4; color: var(--on-brand-3); }
+.tb .infoblokk--hero { max-width: none; margin: auto var(--s-5) var(--s-5); width: auto; }
+.tb__dl { margin-bottom: var(--s-5); }
 
 @keyframes fade { to { opacity: 1; } }
 
 @media (min-width: 1100px) {
   .hero { padding: var(--s-9) 0; }
-  .hero__grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr); gap: var(--s-9); align-items: end; }
+  .hero__grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: var(--s-8); align-items: stretch; }
+  .hero__grid > :first-child { align-self: center; }
+  .tb__dl > div { grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--s-4); padding: var(--s-4) var(--s-5); }
+  .tb__dl dd { font-size: var(--fs-2); }
   .hero h1 { font-size: clamp(3.5rem, 6.4vw, 5.5rem); }
   .hero__lead { font-size: var(--fs-2); line-height: 1.5; }
-  .hero__facts { grid-template-columns: 1fr; }
-  .hero__facts > div { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center; gap: var(--s-4); }
-  .hero__facts dd { margin: 0; }
 }
 
 /* ---------- szekciók ---------- */
