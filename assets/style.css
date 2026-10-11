@@ -25,7 +25,7 @@
   --on-brand: #ffffff;
   --on-brand-2: #d6dbe2;
   --on-brand-3: #b3bcc8;
-  --brand-hi: #e7a3ab;  /* világos bordó (rózsa) kiemelés a tintakéken — 7,1:1 */
+  --brand-hi: #d8c3a0;  /* pergamen kiemelés a tintakéken (cím, aktív menüpont, fókusz) — 8,5:1 */
   --line-brand: rgba(255, 255, 255, .16);
   --main: #1d2a38;      /* tintakék szövegkiemelés a papíron — 13,4:1 */
   --main-2: #141e29;
