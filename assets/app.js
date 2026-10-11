@@ -72,7 +72,7 @@
     });
     calc.addEventListener('change', run);
 
-    /* „Mikor ez kell?” — a választott feladathoz (jogszabályi háttér: ADATOK.md, 2026-10-11) */
+    /* „Mikor kell ez?” — a választott feladathoz (jogszabályi háttér: ADATOK.md, 2026-10-11) */
     const HINT = {
       uj: 'Új ház építéséhez, meglévő bővítéséhez vagy átalakításához. Legfeljebb 300 m²-es új lakóháznál jellemzően egyszerű bejelentés elég, nagyobb vagy nem lakó épületnél építési engedély kell.',
       allapot: 'Ha a meglévő épületről nincs a valóságnak megfelelő terv — például fennmaradási engedélyhez, egy bővítés kiindulópontjaként vagy az energetikai tanúsításhoz.',
