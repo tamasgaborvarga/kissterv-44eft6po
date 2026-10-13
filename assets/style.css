@@ -74,7 +74,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-.has-abar { padding-bottom: 72px; } /* hely a mobil akciósávnak */
+.has-abar { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); } /* hely a mobil akciósávnak (+ az iPhone home-indikátora) */
 @media (min-width: 860px) { .has-abar { padding-bottom: 0; } }
 em, i, cite, address { font-style: normal; }
 img, svg { display: block; max-width: 100%; }
@@ -88,7 +88,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hdr, .hero, .ftr, .sec--ink { --focus: var(--brand-hi); } /* a tintakék gyűrű a sötét felületen láthatatlan */
 ::selection { background: var(--main); color: #fff; }
 
-.wrap { width: 100%; max-width: calc(var(--wrap) + 2 * var(--gut)); margin: 0 auto; padding: 0 var(--gut); }
+.wrap { width: 100%; max-width: calc(var(--wrap) + 2 * var(--gut)); margin: 0 auto; padding: 0 max(var(--gut), env(safe-area-inset-right, 0px)) 0 max(var(--gut), env(safe-area-inset-left, 0px)); } /* viewport-fit=cover: fekve a notch mellett is marad margó */
 .code, .mono { font-family: var(--mono); font-size: var(--fs-0); letter-spacing: .01em; font-weight: 400; }
 .skip { position: absolute; left: -9999px; top: 8px; background: var(--ink); color: #fff; padding: 10px 14px; z-index: 100; }
 .skip:focus { left: 8px; }
@@ -459,7 +459,7 @@ a.ccard:hover { border-color: var(--main); transform: translateX(3px); }
 .infoblokk--hero { max-width: 280px; }
 
 /* ---------- mobil akciósáv (alsó) ---------- */
-.abar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--paper); border-top: 1px solid var(--line-2); padding: var(--s-2) var(--gut) calc(var(--s-2) + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); transform: translateY(110%); transition: transform .3s var(--ease); box-shadow: 0 -10px 30px -20px rgba(23,36,56,.4); }
+.abar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--paper); border-top: 1px solid var(--line-2); padding: var(--s-2) max(var(--gut), env(safe-area-inset-right, 0px)) calc(var(--s-2) + env(safe-area-inset-bottom, 0px)) max(var(--gut), env(safe-area-inset-left, 0px)); /* a viewport-fit=cover nélkül az iOS 0-nak veszi az env()-et → a gombok alja a home-indikátor alá csúszott */ display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); transform: translateY(110%); transition: transform .3s var(--ease); box-shadow: 0 -10px 30px -20px rgba(23,36,56,.4); }
 .abar.is-on { transform: none; }
 .abar .btn { min-height: 48px; padding: 0 var(--s-3); font-size: var(--fs-1); }
 .abar__calc { display: none; }
