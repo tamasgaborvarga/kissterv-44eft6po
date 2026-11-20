@@ -1,11 +1,12 @@
-/* KISSTERV — interakciók: fejléc, menü, belépők, díjkalkulátor, referencialista + szűrő, ajánlatkérő */
+/* KISSTERV — interakciók: fejléc, menü, belépők, díjkalkulátor, referencia-fülek, ajánlatkérő
+   A díjkalkulátor számítási logikája és árai változatlanok (2026-10-11 óta). */
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const EMAIL = 'kisstervkft@kiss-terv.hu';
   const AFA = 0.27;
-  const grp = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); // a hu-HU a 4 jegyűt nem tagolja (2700), itt mindig tagolunk
+  const RM = matchMedia('(prefers-reduced-motion: reduce)');
+  const grp = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); // a hu-HU a 4 jegyűt nem tagolja (2700), itt mindig tagolunk — nem törő szóközzel
   const fmt = n => grp(n) + ' Ft';
 
   /* ---------- fejléc, menü ---------- */
@@ -14,13 +15,29 @@
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
   const burger = $('#burger'), nav = $('#nav');
-  const setMenu = open => { burger.setAttribute('aria-expanded', open); nav.classList.toggle('is-open', open); };
+  const desk = matchMedia('(min-width: 1100px)');
+  const setMenu = open => {
+    burger.setAttribute('aria-expanded', open);
+    nav.classList.toggle('is-open', open);
+    document.body.classList.toggle('nav-open', open);
+    if (open) { const a = $('a', nav); a && a.focus({ preventScroll: true }); }
+  };
   burger.addEventListener('click', () => setMenu(burger.getAttribute('aria-expanded') !== 'true'));
   nav.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
-  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') { setMenu(false); burger.focus(); }
+  });
+  desk.addEventListener('change', () => setMenu(false));
+  /* nyitott mobilmenüben a Tab ne szökjön ki a lapról */
+  nav.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || desk.matches || !nav.classList.contains('is-open')) return;
+    const f = $$('a, button', nav), first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); burger.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); burger.focus(); }
+  });
 
   /* aktív menüpont */
-  const links = $$('.nav a[href^="#"]:not(.btn)');
+  const links = $$('.nav__list a[href^="#"]');
   const spy = new IntersectionObserver(es => es.forEach(en => {
     if (!en.isIntersecting) return;
     links.forEach(a => a.setAttribute('aria-current', a.getAttribute('href') === '#' + en.target.id));
@@ -28,13 +45,14 @@
   links.forEach(a => { const t = $(a.getAttribute('href')); if (t) spy.observe(t); });
 
   /* belépők */
-  const rvo = new IntersectionObserver(es => es.forEach(en => {
-    if (en.isIntersecting) { en.target.classList.add('in'); rvo.unobserve(en.target); }
-  }), { rootMargin: '0px 0px -8% 0px' });
-  $$('.rv').forEach(el => rvo.observe(el));
+  if (!RM.matches && 'IntersectionObserver' in window) {
+    const rvo = new IntersectionObserver(es => es.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add('in'); rvo.unobserve(en.target); }
+    }), { rootMargin: '0px 0px -6% 0px' });
+    $$('.rv').forEach(el => rvo.observe(el));
+  } else $$('.rv').forEach(el => el.classList.add('in'));
 
-
-  /* mobil akciósáv: a hero után jelenik meg, a kapcsolatnál eltűnik; a kalkulátornál a végösszeget mutatja */
+  /* mobil akciósáv: a nyitókép után jelenik meg, a kapcsolatnál eltűnik; a kalkulátornál a végösszeget mutatja */
   const bar = $('#abar');
   if (bar) {
     const seen = { hero: true, contact: false, calc: false, out: false };
@@ -49,8 +67,13 @@
     watch($('#calc-out'), 'out', { threshold: .35 });
   }
 
-
   const yr = $('#yr'); if (yr) yr.textContent = new Date().getFullYear();
+
+  /* ---------- ajánlatkérő előtöltése a szolgáltatás-hivatkozásokból (data-tip = a „Feladat” választó egy opciója) ---------- */
+  const tipSel = $('#f-tip');
+  $$('[data-tip]').forEach(a => a.addEventListener('click', () => {
+    if (tipSel) tipSel.value = a.dataset.tip;
+  }));
 
   /* ---------- díjkalkulátor (a régi oldalon közölt alapárak, nettó) ---------- */
   const RATES = { uj: [1000, 1200, 'Építészeti terv'], allapot: [500, 700, 'Állapotrögzítő terv'], terasz: [500, 800, 'Terasz terve'] };
@@ -58,7 +81,9 @@
   if (calc) {
     const m2 = $('#m2'), m2r = $('#m2r');
     const en = $('#o-en'), enW = $('#o-en-w'), alapW = $('#o-alap-w'), alap = $('#o-alap');
+    const big$ = $('#out-brutto');
     const state = { text: '' };
+    let last = '';
 
     const syncRange = () => m2r.style.setProperty('--p', ((m2r.value - m2r.min) / (m2r.max - m2r.min) * 100) + '%');
     m2r.addEventListener('input', () => { m2.value = m2r.value; syncRange(); run(); });
@@ -100,10 +125,13 @@
 
       const nLo = lines.reduce((s, l) => s + l[1], 0), nHi = lines.reduce((s, l) => s + l[2], 0);
       const range = (a, b) => a === b ? fmt(a) : `${grp(a)} – ${fmt(b)}`;
-      $('#out-brutto').textContent = area ? range(nLo * (1 + AFA), nHi * (1 + AFA)) : '—';
+      const total = area ? range(nLo * (1 + AFA), nHi * (1 + AFA)) : '—';
+      big$.textContent = total;
+      if (total !== last && last && !RM.matches) { big$.classList.remove('tick'); void big$.offsetWidth; big$.classList.add('tick'); }
+      last = total;
       $('#out-netto').textContent = area ? `nettó ${range(nLo, nHi)} + 27% ÁFA` : '';
-      const sum = $('#abar-sum'); if (sum) sum.textContent = $('#out-brutto').textContent;
-      // tagolt számla: alapdíj · kiegészítők · nettó + ÁFA (a bruttó végösszeg alatta, nagyban)
+      const sum = $('#abar-sum'); if (sum) sum.textContent = total;
+      // tagolt számla: alapdíj · kiegészítők · nettó + ÁFA (a bruttó végösszeg fölötte, nagyban)
       const row = (k, a, b, cls = '') => `<div class="${cls}"><span>${k}</span><span>${range(a, b)}</span></div>`;
       const extra = lines.slice(1);
       $('#out-lines').innerHTML = !area ? '<div class="none"><span>Adja meg az alapterületet.</span></div>' :
@@ -124,13 +152,15 @@
       ].filter(Boolean).join('\n');
     }
 
+    const TIP = { uj: 'Lakóház tervezése / bővítése', allapot: 'Állapotrögzítő terv', terasz: 'Lakóház tervezése / bővítése' };
     const toForm = e => {
       const msg = $('#f-msg');
       if (msg) {
         e.preventDefault();
         msg.value = state.text + '\n\nHelyszín / megjegyzés: ';
-        $('#ajanlat').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-        setTimeout(() => $('#f-nev').focus({ preventScroll: true }), 500);
+        if (tipSel) tipSel.value = TIP[calc.querySelector('[name="tipus"]:checked').value];
+        $('#ajanlat').scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+        setTimeout(() => $('#f-nev').focus({ preventScroll: true }), RM.matches ? 0 : 500);
       }
     };
     $('#calc-mail').addEventListener('click', toForm);
@@ -138,22 +168,41 @@
     syncRange(); run();
   }
 
-  /* ---------- referenciák: a tételek a HTML-ben vannak (JS nélkül és keresőnek is látszanak); a JS csak szűr ---------- */
-  const box = $('#refs'), filter = $('#filter');
-  if (!box || !filter) return;
-  let cat = 'tr'; // egyszerre egy csoport látszik; JS nélkül mind (a keresőnek is)
+  /* ---------- referenciák: fülek (WAI-ARIA tabs). A tételek a HTML-ben vannak — JS nélkül mind látszik. ---------- */
+  const box = $('#refs'), tabs = $('#filter');
+  if (!box || !tabs) return;
+  const tabEls = $$('[role="tab"]', tabs);
+  const vert = matchMedia('(min-width: 1100px)');
+  const syncOrient = () => tabs.setAttribute('aria-orientation', vert.matches ? 'vertical' : 'horizontal');
+  vert.addEventListener('change', syncOrient); syncOrient();
 
-  filter.addEventListener('click', e => {
-    const b = e.target.closest('.chip'); if (!b) return;
-    cat = b.dataset.k; apply();
-    b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  });
-
-  function apply() {
-    $$('.chip', filter).forEach(b => b.setAttribute('aria-pressed', b.dataset.k === cat));
-    $$('.rgroup', box).forEach(g => { g.hidden = g.dataset.k !== cat; });
+  function select(k, focus, user = true) {
+    tabEls.forEach(b => {
+      const on = b.dataset.k === k;
+      b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+      if (on && focus) b.focus({ preventScroll: true });
+      /* mobilon csak a pill-sort görgetjük vízszintesen, az oldalt soha */
+      if (on && user && !vert.matches) tabs.scrollTo({ left: b.offsetLeft - tabs.offsetLeft - 16, behavior: RM.matches ? 'auto' : 'smooth' });
+    });
+    $$('.rgroup', box).forEach(g => {
+      const on = g.dataset.k === k;
+      g.hidden = !on;
+      g.classList.toggle('is-in', on && !RM.matches);
+    });
   }
-  apply();
+  tabs.addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) select(b.dataset.k); });
+  tabs.addEventListener('keydown', e => {
+    const i = tabEls.indexOf(document.activeElement); if (i < 0) return;
+    const next = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    let j = null;
+    if (next) j = (i + next + tabEls.length) % tabEls.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = tabEls.length - 1;
+    if (j === null) return;
+    e.preventDefault(); select(tabEls[j].dataset.k, true);
+  });
+  $$('[data-ref]').forEach(a => a.addEventListener('click', () => select(a.dataset.ref)));
+  select('tr', false, false);
 })();
 
 /* ---------- ajánlatkérő: mailto ---------- */
